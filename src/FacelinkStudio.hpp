@@ -3,6 +3,9 @@
 #include <Xenon/Xenon.hpp>
 #include <glm/glm.hpp>
 
+#include "Editor/DockSpace.hpp"
+#include "Editor/PreviewWindow.hpp"
+
 namespace Fls
 {
     class FacelinkStudio final : public Xenon::Application
@@ -16,7 +19,13 @@ namespace Fls
         void updateGui(const Xenon::DeltaTime& deltaTime) override;
 
     private:
+        std::unique_ptr<DockSpace> mDockSpace;
+        std::unique_ptr<PreviewWindow> mPreviewWindow;
+
         glm::vec4 mClearColor{ 0.15f, 0.15f, 0.15f, 1.0f };
+
+        Xenon::ResourceCache<Xenon::Texture2D> mTextureCache;
+        std::shared_ptr<Xenon::Texture2D> mTexture;
     };
 }
 XN_REGISTER_APPLICATION(Fls::FacelinkStudio);
@@ -26,7 +35,7 @@ inline void Xenon::configureApplication(IApplicationBuilder<Fls::FacelinkStudio>
     applicationBuilder.configureApplicationWindow([](ApplicationWindowConfiguration& cfg)
     {
         cfg.setTitle("Facelink Studio");
-        cfg.maximize(false);
+        cfg.maximize(true);
         cfg.setResolution(StandardWindowResolution::A_16X9_R_1280X720);
         cfg.setVSync(false);
     });
