@@ -8,7 +8,9 @@
 namespace Fls
 {
     // TODO: EditorWindow
-    PreviewWindow::PreviewWindow()
+    PreviewWindow::PreviewWindow() = default;
+
+    void PreviewWindow::init()
     {
         mFrameBuffer = Xenon::FrameBuffer::create(mWindowSize.width, mWindowSize.height);
 
@@ -77,7 +79,7 @@ namespace Fls
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
         ImGui::PushStyleColor(ImGuiCol_ResizeGrip, 0);
 
-        ImGui::Begin("Scene", &mPreviewWindowOpen, sceneFlags);
+        ImGui::Begin("Preview", &mPreviewWindowOpen, sceneFlags);
 
         const auto pos = ImGui::GetCursorScreenPos();
         const auto imGuiWindowSize = ImGui::GetContentRegionAvail();

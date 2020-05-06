@@ -1,6 +1,9 @@
 set(FLS_ROOT ${PROJECT_SOURCE_DIR}/src)
 
 add_subdirectory(Editor)
+add_subdirectory(Resource)
+add_subdirectory(Events)
+add_subdirectory(Utils)
 
 set (FLS_SOURCES_ROOT
     ${FLS_ROOT}/FacelinkStudio.cpp
@@ -9,10 +12,16 @@ set (FLS_SOURCES_ROOT
 
 source_group("" FILES ${FLS_SOURCES_ROOT})
 source_group("Editor" FILES ${FLS_SOURCES_EDITOR})
+source_group("Resource" FILES ${FLS_SOURCES_RESOURCE})
+source_group("Events" FILES ${FLS_SOURCES_EVENTS})
+source_group("Utils" FILES ${FLS_SOURCES_UTILS})
 
 set (FLS_SOURCES
     ${FLS_SOURCES_ROOT}
     ${FLS_SOURCES_EDITOR}
+    ${FLS_SOURCES_RESOURCE}
+    ${FLS_SOURCES_EVENTS}
+    ${FLS_SOURCES_UTILS}
 )
 
 add_executable(FacelinkStudio ${FLS_SOURCES})
@@ -20,6 +29,7 @@ target_link_libraries(FacelinkStudio PRIVATE
     Xenon::Options
     Xenon::Warnings
     Xenon::Engine
+    ${OpenCV_LIBS}
 )
 
 include(Settings)

@@ -21,6 +21,8 @@ endif()
 
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-add_subdirectory(src)
 # Third Party Libraries
 add_subdirectory(vendor)
+find_package(OpenCV REQUIRED)
+
+add_subdirectory(src)

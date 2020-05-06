@@ -10,6 +10,7 @@ namespace Fls
     public:
         explicit PreviewWindow();
 
+        void init();
         void draw(const std::shared_ptr<Xenon::Texture2D>& frame) const;
         void updateGui(const Xenon::DeltaTime deltaTime);
     private:

@@ -2,9 +2,9 @@
 
 #include <Xenon/Xenon.hpp>
 #include <glm/glm.hpp>
+#include <opencv2/core/opengl.hpp>
 
-#include "Editor/DockSpace.hpp"
-#include "Editor/PreviewWindow.hpp"
+#include "Resource/ResourceManager.hpp"
 
 namespace Fls
 {
@@ -12,6 +12,7 @@ namespace Fls
     {
     public:
         explicit FacelinkStudio(const Xenon::ApplicationConfiguration& config);
+        ~FacelinkStudio();
 
         void init() override;
 
@@ -19,13 +20,9 @@ namespace Fls
         void updateGui(const Xenon::DeltaTime& deltaTime) override;
 
     private:
-        std::unique_ptr<DockSpace> mDockSpace;
-        std::unique_ptr<PreviewWindow> mPreviewWindow;
-
         glm::vec4 mClearColor{ 0.15f, 0.15f, 0.15f, 1.0f };
 
-        Xenon::ResourceCache<Xenon::Texture2D> mTextureCache;
-        std::shared_ptr<Xenon::Texture2D> mTexture;
+        std::unique_ptr<ResourceManager> mResourceManager;
     };
 }
 XN_REGISTER_APPLICATION(Fls::FacelinkStudio);

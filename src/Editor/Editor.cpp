@@ -1,14 +1,126 @@
 #include "Editor.hpp"
 
+#include "Events/OpenFileEvent.hpp"
+
+#include <Xenon/Core/Gui/Gui.hpp>
+#include <Xenon/Core/ApplicationServices.hpp>
+#include <Xenon/Core/Events/WindowEvent.hpp>
+
 #include <imgui.h>
+#include <imgui_internal.h>
+#include <ImGuiFileDialog.hpp>
 
 namespace Fls
 {
-    void Editor::setStyle(const std::string& fontPath)
+    std::unique_ptr<DockSpace> Editor::dockSpace = std::make_unique<DockSpace>("FacelinkStudioDockSpace");
+    std::unique_ptr<PreviewWindow> Editor::previewWindow = std::make_unique<PreviewWindow>();
+    std::unique_ptr<ResourceWindow> Editor::resourceWindow = std::make_unique<ResourceWindow>();
+
+    void Editor::init(Xenon::Gui& gui)
+    {
+        setCustomStyle("assets/fonts/Ruda-Bold.ttf", gui);
+
+        dockSpace->setInitialWindowsConfiguration([](const ImGuiID mainNodeId)
+        {
+            ImGuiID rightNodeId, rightDownNodeId;
+
+            const auto leftNodeId = ImGui::DockBuilderSplitNode(mainNodeId, ImGuiDir_Left,
+                0.7f, nullptr, &rightNodeId);
+            const auto rightUpNodeId = ImGui::DockBuilderSplitNode(rightNodeId, ImGuiDir_Up,
+                0.65f, nullptr, &rightDownNodeId);
+
+            ImGui::DockBuilderDockWindow("Preview", leftNodeId);
+            ImGui::DockBuilderDockWindow("Dear ImGui Metrics", rightUpNodeId);
+            ImGui::DockBuilderDockWindow("Resources", rightDownNodeId);
+        });
+
+        previewWindow->init();
+    }
+
+    void Editor::shutdown()
+    {
+        previewWindow.reset();
+        resourceWindow.reset();
+        dockSpace.reset();
+    }
+
+    void Editor::updateGui(const Xenon::DeltaTime& deltaTime)
+    {
+        drawMenuBar();
+
+        dockSpace->begin();
+
+        ImGui::ShowMetricsWindow();
+        //ImGui::ShowDemoWindow();
+
+        previewWindow->updateGui(deltaTime);
+        resourceWindow->updateGui(deltaTime);
+
+        dockSpace->end();
+
+        updateFileDialog(deltaTime);
+    }
+
+    void Editor::drawMenuBar()
+    {
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(1.0f, 5.0f));
+
+        if (ImGui::BeginMainMenuBar())
+        {
+            if (ImGui::BeginMenu("File"))
+            {
+                if (ImGui::MenuItem("Open File"))
+                {
+                    igfd::ImGuiFileDialog::Instance()->OpenModal("ChooseFileDlgKey", "Choose File", 
+                        ".jpg\0.png\0\0", ".");
+                }
+
+                if(ImGui::MenuItem("Exit"))
+                {
+                    Xenon::ApplicationServices::EventBus::ref().enqueue<Xenon::WindowCloseEvent>();
+                }
+
+                ImGui::EndMenu();
+            }
+
+            if (ImGui::MenuItem("Database"))
+            {
+            }
+
+            if (ImGui::MenuItem("About"))
+            {
+            }
+
+            ImGui::EndMainMenuBar();
+        }
+
+        ImGui::PopStyleVar();
+    }
+
+    void Editor::updateFileDialog(const Xenon::DeltaTime& deltaTime)
+    {
+        const auto fileDialogOpen = igfd::ImGuiFileDialog::Instance()->FileDialog("ChooseFileDlgKey",
+            ImGuiWindowFlags_NoCollapse, ImVec2(500, 300));
+
+        if (fileDialogOpen)
+        {
+            if (igfd::ImGuiFileDialog::Instance()->IsOk == true)
+            {
+                auto path = igfd::ImGuiFileDialog::Instance()->GetFilepathName();
+
+                Xenon::ApplicationServices::EventBus::ref().enqueue<OpenFileEvent>(path);
+            }
+
+            igfd::ImGuiFileDialog::Instance()->CloseDialog("ChooseFileDlgKey");
+        }
+    }
+
+    void Editor::setCustomStyle(const std::string& fontPath, Xenon::Gui& gui)
     {
         auto& io = ImGui::GetIO();
 
-        io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 15.0f, nullptr, io.Fonts->GetGlyphRangesCyrillic());
+        auto* font = io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 15.0f);
+        gui.setFont(font);
 
         ImGui::GetStyle().FrameRounding = 4.0f;
         ImGui::GetStyle().GrabRounding = 4.0f;
