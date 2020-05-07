@@ -25,6 +25,8 @@ namespace Fls
 
         pixelBuffer.unmapDevice();
 
+        preprocessForDetection(pixels, userResource);
+
         generateFrameTexture(pixelBuffer, userResource);
         generateThumbnailTexture(dThumbnail, userResource);
     }
@@ -38,6 +40,14 @@ namespace Fls
         const auto thumbnailHeight = static_cast<uint32_t>(static_cast<float>(src.rows) * aspectRatio);
 
         cv::cuda::resize(src, dst, cv::Size(thumbnailWidth, thumbnailHeight));
+    }
+
+    void ResourcePreprocessor::preprocessForDetection(const cv::Mat& pixels, UserResource* userResource)
+    {
+        cv::Mat resizedPixels;
+        cv::resize(pixels, resizedPixels, cv::Size(300, 300));
+
+        userResource->detectionFrame = std::move(resizedPixels);
     }
 
     void ResourcePreprocessor::generateFrameTexture(const cv::ogl::Buffer& pixels, UserResource* userResource)

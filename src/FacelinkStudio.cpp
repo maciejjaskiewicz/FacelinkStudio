@@ -11,8 +11,7 @@ namespace Fls
         : Application(config)
     {
         mResourceManager = std::make_unique<ResourceManager>();
-
-        Editor::init(*mGui);
+        mFaceDetector = std::make_unique<FaceDetector>();
     }
 
     FacelinkStudio::~FacelinkStudio()
@@ -22,9 +21,15 @@ namespace Fls
 
     void FacelinkStudio::init()
     {
-        mResourceManager->init();
+        Editor::init(*mGui);
 
-        mResourceManager->load("assets/textures/squirviel_hd.jpg");
+        mResourceManager->init();
+        mFaceDetector->init(
+            "assets/models/res10_300x300_ssd_iter_140000.prototxt",
+            "assets/models/res10_300x300_ssd_iter_140000.caffemodel"
+        );
+
+        mResourceManager->load("assets/textures/nasa_crew.jpg");
 
         XN_INFO("Facelink Studio initialized");
     }
@@ -37,7 +42,14 @@ namespace Fls
         const auto* selectedResource = mResourceManager->selectedResource();
         if(selectedResource)
         {
-            Editor::previewWindow->draw(selectedResource->frame);
+            const auto detectionResult = mFaceDetector->detect(selectedResource);
+
+            Editor::previewWindow->begin();
+
+            Editor::previewWindow->drawFrame(selectedResource->frame);
+            Editor::previewWindow->drawDetectionResult(detectionResult);
+
+            Editor::previewWindow->end();
         }
 
         if(mResourceManager->dirty())

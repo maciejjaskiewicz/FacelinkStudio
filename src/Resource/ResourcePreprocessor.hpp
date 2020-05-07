@@ -22,6 +22,7 @@ namespace Fls
         static void preprocess(const cv::Mat& pixels, UserResource* userResource);
     private:
         static void preprocessThumbnail(cv::cuda::GpuMat& src, cv::cuda::GpuMat& dst);
+        static void preprocessForDetection(const cv::Mat& pixels, UserResource* userResource);
 
         static void generateFrameTexture(const cv::ogl::Buffer& pixels, UserResource* userResource);
         static void generateThumbnailTexture(const cv::cuda::GpuMat& thumbnailPixels, UserResource* userResource);
