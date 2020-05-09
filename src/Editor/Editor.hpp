@@ -26,6 +26,7 @@ namespace Fls
         static std::unique_ptr<ResourceWindow> resourceWindow;
     private:
         static void drawMenuBar();
+        static void drawStatusBar();
         static void updateFileDialog(const Xenon::DeltaTime& deltaTime);
 
         static void setCustomStyle(const std::string& fontPath, Xenon::Gui& gui);

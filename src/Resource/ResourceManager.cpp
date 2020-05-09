@@ -39,44 +39,62 @@ namespace Fls
 
         const auto absolute = std::filesystem::absolute(path);
 
-        UserResource resource{
-            Random::generateHex(16),
-             absolute.filename().string(),
-            absolute.string()
-        };
+        auto loadFuture = std::async(std::launch::async, 
+            [this, absolute]()
+        {
+            UserResource resource;
 
-        const auto pixels = cv::imread(absolute.string(), cv::IMREAD_UNCHANGED);
+            resource.id = cv::getTickCount();
+            resource.name = absolute.filename().string();
+            resource.path = absolute.string();
 
-        ResourcePreprocessor::preprocess(pixels, &resource);
+            resource.pixels = cv::imread(absolute.string(), cv::IMREAD_COLOR);
+            resource.gpuPixels = cv::cuda::GpuMat(resource.pixels);
 
-        auto it = mResources.emplace(resource.id, resource).first;
-        mSelectedResource = &it->second;
+            std::lock_guard<std::mutex> lock(mResourcesMutex);
 
-        mDirty = true;
+            auto it = mResources.emplace(resource.id, resource).first;
+            mSelectedResource.store(&it->second);
+
+            mDirty.store(true);
+        });
+
+        mLoadFutures.push_back(std::move(loadFuture));
     }
 
-    void ResourceManager::select(const std::string& id)
+    void ResourceManager::select(const int64& id)
     {
+        std::lock_guard<std::mutex> lock(mResourcesMutex);
+
         const auto resourceIt = mResources.find(id);
 
         if(resourceIt != mResources.end())
         {
-            mSelectedResource = &resourceIt->second;
+            mSelectedResource.store(&resourceIt->second);
         }
     }
 
     bool ResourceManager::dirty() const
     {
-        return mDirty;
+        return mDirty.load();
     }
 
     UserResource* ResourceManager::selectedResource() const
     {
-        return mSelectedResource;
+        auto* selectedResource = mSelectedResource.load();
+
+        if(selectedResource && !selectedResource->preprocessed)
+        {
+            ResourcePreprocessor::preprocess(selectedResource);
+            selectedResource->preprocessed = true;
+        }
+
+        return mSelectedResource.load();
     }
 
     std::vector<UserResource*> ResourceManager::resources()
     {
+        std::lock_guard<std::mutex> lock(mResourcesMutex);
         std::vector<UserResource*> resources;
 
         for(auto& res : mResources)
@@ -84,7 +102,7 @@ namespace Fls
             resources.push_back(&res.second);
         }
 
-        mDirty = false;
+        mDirty.store(false);
         return resources;
     }
 }

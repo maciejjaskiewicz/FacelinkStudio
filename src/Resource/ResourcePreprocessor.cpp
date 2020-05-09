@@ -8,26 +8,21 @@
 
 namespace Fls
 {
-    void ResourcePreprocessor::preprocess(const cv::Mat& pixels, UserResource* userResource)
+    void ResourcePreprocessor::preprocess(UserResource* userResource)
     {
-        cv::ogl::Buffer pixelBuffer(pixels, cv::ogl::Buffer::PIXEL_UNPACK_BUFFER, true);
-
-        cv::cuda::GpuMat dPixels = pixelBuffer.mapDevice();
         cv::cuda::GpuMat dRgbPixels, dThumbnail;
 
-        pixelBuffer.channels() == 3
-            ? cv::cuda::cvtColor(dPixels, dRgbPixels, cv::COLOR_BGR2RGB)
-            : cv::cuda::cvtColor(dPixels, dRgbPixels, cv::COLOR_BGRA2RGBA);
+        userResource->gpuPixels.channels() == 3
+            ? cv::cuda::cvtColor(userResource->gpuPixels, dRgbPixels, cv::COLOR_BGR2RGB)
+            : cv::cuda::cvtColor(userResource->gpuPixels, dRgbPixels, cv::COLOR_BGRA2RGBA);
 
-        cv::cuda::flip(dRgbPixels, dPixels, 0);
+        cv::cuda::flip(dRgbPixels, userResource->gpuPixels, 0);
 
         preprocessThumbnail(dRgbPixels, dThumbnail);
 
-        pixelBuffer.unmapDevice();
+        preprocessForDetection(userResource);
 
-        preprocessForDetection(pixels, userResource);
-
-        generateFrameTexture(pixelBuffer, userResource);
+        generateFrameTexture(userResource);
         generateThumbnailTexture(dThumbnail, userResource);
     }
 
@@ -42,20 +37,22 @@ namespace Fls
         cv::cuda::resize(src, dst, cv::Size(thumbnailWidth, thumbnailHeight));
     }
 
-    void ResourcePreprocessor::preprocessForDetection(const cv::Mat& pixels, UserResource* userResource)
+    void ResourcePreprocessor::preprocessForDetection(UserResource* userResource)
     {
         cv::Mat resizedPixels;
-        cv::resize(pixels, resizedPixels, cv::Size(300, 300));
+        cv::resize(userResource->pixels, resizedPixels, cv::Size(300, 300));
 
         userResource->detectionFrame = std::move(resizedPixels);
     }
 
-    void ResourcePreprocessor::generateFrameTexture(const cv::ogl::Buffer& pixels, UserResource* userResource)
+    void ResourcePreprocessor::generateFrameTexture(UserResource* userResource)
     {
-        pixels.bind(cv::ogl::Buffer::PIXEL_UNPACK_BUFFER);
+        const cv::ogl::Buffer pixelBuffer(userResource->gpuPixels, cv::ogl::Buffer::PIXEL_UNPACK_BUFFER, true);
 
-        const Xenon::Texture2DConfiguration textureCfg(pixels.cols(), pixels.rows(), 
-            resolveFormat(pixels.channels()));
+        pixelBuffer.bind(cv::ogl::Buffer::PIXEL_UNPACK_BUFFER);
+
+        const Xenon::Texture2DConfiguration textureCfg(pixelBuffer.cols(), pixelBuffer.rows(),
+            resolveFormat(pixelBuffer.channels()));
         userResource->frame = Xenon::Texture2D::create(nullptr, textureCfg);
 
         cv::ogl::Buffer::unbind(cv::ogl::Buffer::PIXEL_UNPACK_BUFFER);

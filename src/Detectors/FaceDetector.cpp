@@ -8,17 +8,23 @@ namespace Fls
 {
     void FaceDetector::init(const std::string& netCfgPath, const std::string& netWeightsPath)
     {
-        mDetectionNetwork = cv::dnn::readNetFromCaffe(netCfgPath, netWeightsPath);
+        mInitializedFuture = std::async(std::launch::async, 
+            [this, netCfgPath, netWeightsPath]()
+        {
+            mDetectionNetwork = cv::dnn::readNetFromCaffe(netCfgPath, netWeightsPath);
 
-        mDetectionNetwork.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
-        mDetectionNetwork.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
+            mDetectionNetwork.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
+            mDetectionNetwork.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
+
+            mInitialized.store(true);
+        });
     }
 
     std::vector<FaceDetectionResult> FaceDetector::detect(const UserResource* userResource)
     {
         std::vector<FaceDetectionResult> result;
 
-        if(!userResource || userResource->detectionFrame.empty())
+        if(!mInitialized.load() || !userResource || userResource->detectionFrame.empty())
             return result;
 
         if(mLastFrameId != userResource->id)

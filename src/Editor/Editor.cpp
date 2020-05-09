@@ -69,7 +69,7 @@ namespace Fls
         dockSpace->begin();
 
         ImGui::ShowMetricsWindow();
-        ImGui::ShowDemoWindow();
+        //ImGui::ShowDemoWindow();
 
         previewWindow->updateGui(deltaTime);
         resourceWindow->updateGui(deltaTime);

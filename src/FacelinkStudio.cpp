@@ -39,18 +39,18 @@ namespace Fls
         Xenon::RenderCmd::setClearColor(mClearColor);
         Xenon::RenderCmd::clear();
 
+        Editor::previewWindow->begin();
+
         const auto* selectedResource = mResourceManager->selectedResource();
         if(selectedResource)
         {
             const auto detectionResult = mFaceDetector->detect(selectedResource);
 
-            Editor::previewWindow->begin();
-
             Editor::previewWindow->drawFrame(selectedResource->frame);
-            Editor::previewWindow->drawDetectionResult(detectionResult);
-
-            Editor::previewWindow->end();
+            Editor::previewWindow->drawDetectionResult(detectionResult);            
         }
+
+        Editor::previewWindow->end();
 
         if(mResourceManager->dirty())
             Editor::resourceWindow->setResources(mResourceManager->resources());
