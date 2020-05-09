@@ -2,6 +2,7 @@
 
 #include "Events/OpenFileEvent.hpp"
 
+#include <Xenon/Graphics.hpp>
 #include <Xenon/Core/Gui/Gui.hpp>
 #include <Xenon/Core/ApplicationServices.hpp>
 #include <Xenon/Core/Events/WindowEvent.hpp>
@@ -20,6 +21,21 @@ namespace Fls
     {
         setCustomStyle("assets/fonts/Ruda-Bold.ttf", gui);
 
+        shaderCache.set<Xenon::ShaderLoader>("flat", Xenon::ShaderLoaderArgs(
+            "assets/shaders/FlatColorVertex.glsl",
+            "assets/shaders/FlatColorFragment.glsl"
+        ));
+
+        shaderCache.set<Xenon::ShaderLoader>("texture", Xenon::ShaderLoaderArgs(
+            "assets/shaders/TextureVertex.glsl",
+            "assets/shaders/TextureFragment.glsl"
+        ));
+
+        shaderCache.set<Xenon::ShaderLoader>("detectionBox", Xenon::ShaderLoaderArgs(
+            "assets/shaders/DetectionBoxVertex.glsl",
+            "assets/shaders/DetectionBoxFragment.glsl"
+        ));
+
         dockSpace->setInitialWindowsConfiguration([](const ImGuiID mainNodeId)
         {
             ImGuiID rightNodeId, rightDownNodeId;
@@ -34,7 +50,7 @@ namespace Fls
             ImGui::DockBuilderDockWindow("Resources", rightDownNodeId);
         });
 
-        previewWindow->init();
+        previewWindow->init(shaderCache);
     }
 
     void Editor::shutdown()
@@ -42,6 +58,8 @@ namespace Fls
         previewWindow.reset();
         resourceWindow.reset();
         dockSpace.reset();
+
+        shaderCache.clear();
     }
 
     void Editor::updateGui(const Xenon::DeltaTime& deltaTime)
@@ -51,7 +69,7 @@ namespace Fls
         dockSpace->begin();
 
         ImGui::ShowMetricsWindow();
-        //ImGui::ShowDemoWindow();
+        ImGui::ShowDemoWindow();
 
         previewWindow->updateGui(deltaTime);
         resourceWindow->updateGui(deltaTime);

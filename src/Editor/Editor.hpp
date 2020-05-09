@@ -30,6 +30,7 @@ namespace Fls
 
         static void setCustomStyle(const std::string& fontPath, Xenon::Gui& gui);
 
+        inline static Xenon::ResourceCache<Xenon::Shader> shaderCache;
         static std::unique_ptr<DockSpace> dockSpace;
     };
 }

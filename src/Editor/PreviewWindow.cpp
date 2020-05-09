@@ -11,16 +11,9 @@ namespace Fls
     // TODO: EditorWindow
     PreviewWindow::PreviewWindow() = default;
 
-    void PreviewWindow::init()
+    void PreviewWindow::init(Xenon::ResourceCache<Xenon::Shader>& shaderCache)
     {
         mFrameBuffer = Xenon::FrameBuffer::create(mWindowSize.width, mWindowSize.height);
-
-        float quadVertices[4 * 3] = {
-            -1.0f, -1.0f, 0.0f,
-             1.0f, -1.0f, 0.0f,
-            -1.0f,  1.0f, 0.0f,
-             1.0f,  1.0f, 0.0f
-        };
 
         float textureQuadVertices[4 * 5] = {
             -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
@@ -34,39 +27,22 @@ namespace Fls
             2, 1, 3
         };
 
-        mQuadVertexBuffer = Xenon::VertexBuffer::create(quadVertices, sizeof quadVertices);
-        mTextureQuadVertexBuffer = Xenon::VertexBuffer::create(textureQuadVertices, sizeof textureQuadVertices);
-
+        mQuadVertexBuffer = Xenon::VertexBuffer::create(textureQuadVertices, sizeof textureQuadVertices);
         mIndexBuffer = Xenon::IndexBuffer::create(indices, sizeof(indices) / sizeof(uint32_t));
 
-        const Xenon::BufferLayout quadBufferLayout = {
-            { Xenon::DataType::Float3, "aPosition" },
-        };
         const Xenon::BufferLayout textureQuadBufferLayout = {
             { Xenon::DataType::Float3, "aPosition" },
             { Xenon::DataType::Float2, "aTextureCoordinate" }
         };
 
-        mQuadVertexBuffer->setLayout(quadBufferLayout);
-        mTextureQuadVertexBuffer->setLayout(textureQuadBufferLayout);
+        mQuadVertexBuffer->setLayout(textureQuadBufferLayout);
 
         mQuadVertexArray = Xenon::VertexArray::create();
         mQuadVertexArray->pushVertexBuffer(mQuadVertexBuffer);
         mQuadVertexArray->bindIndexBuffer(mIndexBuffer);
 
-        mTextureQuadVertexArray = Xenon::VertexArray::create();
-        mTextureQuadVertexArray->pushVertexBuffer(mTextureQuadVertexBuffer);
-        mTextureQuadVertexArray->bindIndexBuffer(mIndexBuffer);
-
-        mFlatShader = mShaderCache.load<Xenon::ShaderLoader>("flat", Xenon::ShaderLoaderArgs(
-            "assets/shaders/FlatColorVertex.glsl",
-            "assets/shaders/FlatColorFragment.glsl"
-        ));
-
-        mTextureShader = mShaderCache.load<Xenon::ShaderLoader>("texture", Xenon::ShaderLoaderArgs(
-            "assets/shaders/TextureVertex.glsl",
-            "assets/shaders/TextureFragment.glsl"
-        ));
+        mDetectionBoxShader = shaderCache.load("detectionBox");
+        mTextureShader = shaderCache.load("texture");
 
         mCamera = std::make_shared<Xenon::OrthographicCamera>(Xenon::OrthographicCameraProjConfiguration{
             -1.0f, 1.0f, -1.0f, 1.0f
@@ -104,7 +80,7 @@ namespace Fls
         frame->bind();
         mTextureShader->bind();
         mTextureShader->setInt("uTexture", 0);
-        renderer.submit(mTextureShader, mTextureQuadVertexArray, transform);
+        renderer.submit(mTextureShader, mQuadVertexArray, transform);
     }
 
     void PreviewWindow::drawDetectionResult(const std::vector<FaceDetectionResult>& detectionResult) const
@@ -113,14 +89,22 @@ namespace Fls
             return;
 
         auto& renderer = Xenon::ApplicationServices::Renderer::ref();
-
-        mFlatShader->bind();
-        mFlatShader->setFloat4("uColor", glm::vec4(0.1f, 0.8f, 0.1f, 0.3f));
+        
+        mDetectionBoxShader->bind();
+        mDetectionBoxShader->setFloat("uBoxOutlineWidth", 0.02f);
+        mDetectionBoxShader->setFloat4("uBoxOutlineColor", glm::vec4(0.1f, 0.8f, 0.1f, 0.8f));
+        mDetectionBoxShader->setFloat4("uBoxFillColor", glm::vec4(0.1f, 0.8f, 0.1f, 0.15f));
 
         for(const auto& detection : detectionResult)
         {
-            const auto transform = mapDetectionToDisplayQuad(detection, mCurrentFrameSize.width, mCurrentFrameSize.height);
-            renderer.submit(mFlatShader, mQuadVertexArray, transform);
+            const auto ndcDetectionBox = translateDetectionBoxToNdc(detection, mCurrentFrameSize.width, mCurrentFrameSize.height);
+
+            auto transform = glm::translate(glm::mat4(1.0f),
+                glm::vec3(ndcDetectionBox.x, -ndcDetectionBox.y, 0.0f));
+
+            transform *= glm::scale(glm::mat4(1.0f), glm::vec3(ndcDetectionBox.width, ndcDetectionBox.height, 0.0f));
+
+            renderer.submit(mDetectionBoxShader, mQuadVertexArray, transform);
         }
     }
 
@@ -173,37 +157,6 @@ namespace Fls
         return glm::scale(glm::mat4(1.0f), glm::vec3(displayQuadAspect.x, displayQuadAspect.y, 1.0f));
     }
 
-    glm::mat4 PreviewWindow::mapDetectionToDisplayQuad(const FaceDetectionResult& detectionResult, 
-        const uint32_t frameWidth, const uint32_t frameHeight) const
-    {
-        const auto detQuadCenterX = static_cast<float>(detectionResult.x1 + detectionResult.x2) / 2;
-        const auto detQuadCenterY = static_cast<float>(detectionResult.y1 + detectionResult.y2) / 2;
-
-        const auto detQuadWidth = static_cast<float>(detectionResult.x2 - detectionResult.x1);
-        const auto detQuadHeight = static_cast<float>(detectionResult.y2 - detectionResult.y1);
-
-        const auto displayQuadAspect = calculateDisplayQuadAspect(frameWidth, frameHeight);
-
-        const auto detQuadNdcX = Math::interpolate(detQuadCenterX, 
-            0.0f, static_cast<float>(frameWidth),
-            -displayQuadAspect.x, displayQuadAspect.x);
-
-        const auto detQuadNdcY = Math::interpolate(detQuadCenterY,
-            0.0f, static_cast<float>(frameHeight),
-            -displayQuadAspect.y, displayQuadAspect.y);
-
-        const auto detQuadNdcWidth = Math::interpolate(detQuadWidth, 
-            0.0f, static_cast<float>(frameWidth), 
-            0.0f, displayQuadAspect.x);
-        const auto detQuadNdcHeight = Math::interpolate(detQuadHeight,
-            0.0f, static_cast<float>(frameHeight), 
-            0.0f, displayQuadAspect.y);
-
-        const auto transform = glm::translate(glm::mat4(1.0f), glm::vec3(detQuadNdcX, -detQuadNdcY, 0.0f));
-
-        return transform * glm::scale(glm::mat4(1.0f), glm::vec3(detQuadNdcWidth, detQuadNdcHeight, 0.0f));
-    }
-
     glm::vec2 PreviewWindow::calculateDisplayQuadAspect(const uint32_t frameWidth, const uint32_t frameHeight) const
     {
         const auto frameAspectRatio = static_cast<float>(frameWidth) / frameHeight;
@@ -218,5 +171,40 @@ namespace Fls
         }
 
         return glm::vec2(displayQuadWidth, displayQuadHeight);
+    }
+
+    PreviewWindow::FaceDetectionBoxNdc PreviewWindow::translateDetectionBoxToNdc(const FaceDetectionResult& detectionResult, 
+        const uint32_t frameWidth, const uint32_t frameHeight) const
+    {
+        const auto detQuadCenterX = static_cast<float>(detectionResult.x1 + detectionResult.x2) / 2;
+        const auto detQuadCenterY = static_cast<float>(detectionResult.y1 + detectionResult.y2) / 2;
+
+        const auto detQuadWidth = static_cast<float>(detectionResult.x2 - detectionResult.x1);
+        const auto detQuadHeight = static_cast<float>(detectionResult.y2 - detectionResult.y1);
+
+        const auto displayQuadAspect = calculateDisplayQuadAspect(frameWidth, frameHeight);
+
+        const auto detQuadNdcX = Math::interpolate(detQuadCenterX,
+            0.0f, static_cast<float>(frameWidth),
+            -displayQuadAspect.x, displayQuadAspect.x);
+
+        const auto detQuadNdcY = Math::interpolate(detQuadCenterY,
+            0.0f, static_cast<float>(frameHeight),
+            -displayQuadAspect.y, displayQuadAspect.y);
+
+        const auto detQuadNdcWidth = Math::interpolate(detQuadWidth,
+            0.0f, static_cast<float>(frameWidth),
+            0.0f, displayQuadAspect.x);
+        const auto detQuadNdcHeight = Math::interpolate(detQuadHeight,
+            0.0f, static_cast<float>(frameHeight),
+            0.0f, displayQuadAspect.y);
+
+        return FaceDetectionBoxNdc
+        {
+            detQuadNdcX,
+            detQuadNdcY,
+            detQuadNdcWidth,
+            detQuadNdcHeight
+        };
     }
 }
