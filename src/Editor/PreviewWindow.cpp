@@ -1,6 +1,7 @@
 #include "PreviewWindow.hpp"
 
 #include "Utils/Math.hpp"
+#include "Events/FaceDetectionSettingChangedEvent.hpp"
 
 #include <Xenon/Core/ApplicationServices.hpp>
 #include <imgui.h>
@@ -47,6 +48,15 @@ namespace Fls
         mCamera = std::make_shared<Xenon::OrthographicCamera>(Xenon::OrthographicCameraProjConfiguration{
             -1.0f, 1.0f, -1.0f, 1.0f
         });
+
+        Xenon::ApplicationServices::EventBus::ref().subscribe<FaceDetectionSettingChangedEvent>(
+            [this](const FaceDetectionSettingChangedEvent& event)
+        {
+            mShowDetectionBoxes = event.showDetectionBox;
+            mDetectionBoxOutlineWidth = event.outlineThickness;
+            mDetectionBoxOutline = event.outlineColor;
+            mDetectionBoxFill = event.fillColor;
+        });
     }
 
     void PreviewWindow::begin() const
@@ -85,15 +95,15 @@ namespace Fls
 
     void PreviewWindow::drawDetectionResult(const std::vector<FaceDetectionResult>& detectionResult) const
     {
-        if(detectionResult.empty())
+        if(detectionResult.empty() || !mShowDetectionBoxes)
             return;
 
         auto& renderer = Xenon::ApplicationServices::Renderer::ref();
         
         mDetectionBoxShader->bind();
-        mDetectionBoxShader->setFloat("uBoxOutlineWidth", 0.02f);
-        mDetectionBoxShader->setFloat4("uBoxOutlineColor", glm::vec4(0.1f, 0.8f, 0.1f, 0.8f));
-        mDetectionBoxShader->setFloat4("uBoxFillColor", glm::vec4(0.1f, 0.8f, 0.1f, 0.15f));
+        mDetectionBoxShader->setFloat("uBoxOutlineWidth", mDetectionBoxOutlineWidth);
+        mDetectionBoxShader->setFloat4("uBoxOutlineColor", mDetectionBoxOutline);
+        mDetectionBoxShader->setFloat4("uBoxFillColor", mDetectionBoxFill);
 
         for(const auto& detection : detectionResult)
         {

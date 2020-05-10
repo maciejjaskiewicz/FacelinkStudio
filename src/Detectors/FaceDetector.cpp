@@ -1,8 +1,8 @@
 #include "FaceDetector.hpp"
 
 #include "Resource/UserResource.hpp"
-
-#include <opencv2/imgproc.hpp>
+#include "Events/FaceDetectionSettingChangedEvent.hpp"
+#include "Xenon/Core/ApplicationServices.hpp"
 
 namespace Fls
 {
@@ -18,6 +18,16 @@ namespace Fls
 
             mInitialized.store(true);
         });
+
+        Xenon::ApplicationServices::EventBus::ref().subscribe<FaceDetectionSettingChangedEvent>(
+        [this](const FaceDetectionSettingChangedEvent& event)
+        {
+            if(mConfidenceThreshold != event.confidenceThreshold)
+            {
+                mConfidenceThreshold = event.confidenceThreshold;
+                mSettingsChanged = true;
+            }
+        });
     }
 
     std::vector<FaceDetectionResult> FaceDetector::detect(const UserResource* userResource)
@@ -27,7 +37,7 @@ namespace Fls
         if(!mInitialized.load() || !userResource || userResource->detectionFrame.empty())
             return result;
 
-        if(mLastFrameId != userResource->id)
+        if(mLastFrameId != userResource->id || mSettingsChanged)
         {
             const auto detectionBlob = preprocess(userResource->detectionFrame);
             mDetectionNetwork.setInput(detectionBlob);
@@ -42,7 +52,7 @@ namespace Fls
                 const auto frameWidth = userResource->frame->width();
                 const auto frameHeight = userResource->frame->height();
 
-                if (confidence > 0.5)
+                if (confidence > mConfidenceThreshold)
                 {
                     FaceDetectionResult detectionResult
                     {
@@ -59,6 +69,7 @@ namespace Fls
 
             mLastFrameId = userResource->id;
             mLastFrameDetectionResult = result;
+            mSettingsChanged = false;
 
             return result;
         }

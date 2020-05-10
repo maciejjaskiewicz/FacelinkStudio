@@ -23,7 +23,7 @@ namespace Fls
         bool preprocessed{ false };
 
         UserResource()
-            : gpuPixels(cv::cuda::GpuMat())
+            : id(0), gpuPixels(cv::cuda::GpuMat())
         { }
 
         static constexpr uint32_t THUMBNAIL_WIDTH = 256;

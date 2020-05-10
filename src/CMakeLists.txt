@@ -32,6 +32,7 @@ target_link_libraries(FacelinkStudio PRIVATE
     Xenon::Options
     Xenon::Warnings
     Xenon::Engine
+    ${CUDA_LIBRARIES}
     ${OpenCV_LIBS}
 )
 
@@ -39,6 +40,7 @@ include(Settings)
 set_target_output(FacelinkStudio)
 
 target_include_directories(FacelinkStudio PRIVATE ${FLS_ROOT})
+target_include_directories(FacelinkStudio PRIVATE ${CUDA_INCLUDE_DIRS})
 
 add_custom_command(TARGET FacelinkStudio PRE_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory

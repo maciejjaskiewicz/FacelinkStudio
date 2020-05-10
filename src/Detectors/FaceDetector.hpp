@@ -19,10 +19,12 @@ namespace Fls
     private:
         std::atomic_bool mInitialized{ false };
         std::future<void> mInitializedFuture;
+        bool mSettingsChanged{ false };
 
         cv::dnn::Net mDetectionNetwork;
+        float mConfidenceThreshold{ 0.5f };
 
-        int64 mLastFrameId;
+        int64 mLastFrameId{ 0 };
         std::vector<FaceDetectionResult> mLastFrameDetectionResult;
     };
 }

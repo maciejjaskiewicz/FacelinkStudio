@@ -9,5 +9,7 @@ set (FLS_SOURCES_EDITOR
     ${FLS_SRCROOT}/PreviewWindow.hpp
     ${FLS_SRCROOT}/ResourceWindow.cpp
     ${FLS_SRCROOT}/ResourceWindow.hpp
+    ${FLS_SRCROOT}/InspectorWindow.cpp
+    ${FLS_SRCROOT}/InspectorWindow.hpp
     PARENT_SCOPE
 )

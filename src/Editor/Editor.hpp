@@ -3,6 +3,7 @@
 #include "DockSpace.hpp"
 #include "PreviewWindow.hpp"
 #include "ResourceWindow.hpp"
+#include "InspectorWindow.hpp"
 
 #include <string>
 #include <memory>
@@ -24,9 +25,9 @@ namespace Fls
 
         static std::unique_ptr<PreviewWindow> previewWindow;
         static std::unique_ptr<ResourceWindow> resourceWindow;
+        static std::unique_ptr<InspectorWindow> inspectorWindow;
     private:
         static void drawMenuBar();
-        static void drawStatusBar();
         static void updateFileDialog(const Xenon::DeltaTime& deltaTime);
 
         static void setCustomStyle(const std::string& fontPath, Xenon::Gui& gui);

@@ -23,6 +23,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Third Party Libraries
 add_subdirectory(vendor)
+find_package(CUDA REQUIRED)
 find_package(OpenCV REQUIRED)
 
 add_subdirectory(src)

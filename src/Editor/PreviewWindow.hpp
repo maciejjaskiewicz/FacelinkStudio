@@ -45,5 +45,10 @@ namespace Fls
         std::shared_ptr<Xenon::VertexBuffer> mQuadVertexBuffer;
         std::shared_ptr<Xenon::IndexBuffer> mIndexBuffer;
         std::shared_ptr<Xenon::VertexArray> mQuadVertexArray;
+
+        bool mShowDetectionBoxes{ true };
+        float mDetectionBoxOutlineWidth{ 0.02f };
+        glm::vec4 mDetectionBoxOutline{ 0.1f, 0.8f, 0.1f, 0.8f };
+        glm::vec4 mDetectionBoxFill{ 0.1f, 0.8f, 0.1f, 0.15f };
     };
 }

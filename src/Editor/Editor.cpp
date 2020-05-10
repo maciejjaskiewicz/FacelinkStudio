@@ -16,6 +16,7 @@ namespace Fls
     std::unique_ptr<DockSpace> Editor::dockSpace = std::make_unique<DockSpace>("FacelinkStudioDockSpace");
     std::unique_ptr<PreviewWindow> Editor::previewWindow = std::make_unique<PreviewWindow>();
     std::unique_ptr<ResourceWindow> Editor::resourceWindow = std::make_unique<ResourceWindow>();
+    std::unique_ptr<InspectorWindow> Editor::inspectorWindow = std::make_unique<InspectorWindow>();
 
     void Editor::init(Xenon::Gui& gui)
     {
@@ -41,22 +42,25 @@ namespace Fls
             ImGuiID rightNodeId, rightDownNodeId;
 
             const auto leftNodeId = ImGui::DockBuilderSplitNode(mainNodeId, ImGuiDir_Left,
-                0.7f, nullptr, &rightNodeId);
+                0.75f, nullptr, &rightNodeId);
             const auto rightUpNodeId = ImGui::DockBuilderSplitNode(rightNodeId, ImGuiDir_Up,
                 0.65f, nullptr, &rightDownNodeId);
 
             ImGui::DockBuilderDockWindow("Preview", leftNodeId);
-            ImGui::DockBuilderDockWindow("Dear ImGui Metrics", rightUpNodeId);
+            ImGui::DockBuilderDockWindow("Inspector", rightUpNodeId);
             ImGui::DockBuilderDockWindow("Resources", rightDownNodeId);
         });
 
         previewWindow->init(shaderCache);
+        inspectorWindow->init();
     }
 
     void Editor::shutdown()
     {
         previewWindow.reset();
         resourceWindow.reset();
+        inspectorWindow.reset();
+
         dockSpace.reset();
 
         shaderCache.clear();
@@ -68,11 +72,12 @@ namespace Fls
 
         dockSpace->begin();
 
-        ImGui::ShowMetricsWindow();
+        //ImGui::ShowMetricsWindow();
         //ImGui::ShowDemoWindow();
 
         previewWindow->updateGui(deltaTime);
         resourceWindow->updateGui(deltaTime);
+        inspectorWindow->updateGui(deltaTime);
 
         dockSpace->end();
 
