@@ -25,5 +25,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 add_subdirectory(vendor)
 find_package(CUDA REQUIRED)
 find_package(OpenCV REQUIRED)
+find_package(dlib REQUIRED)
 
 add_subdirectory(src)

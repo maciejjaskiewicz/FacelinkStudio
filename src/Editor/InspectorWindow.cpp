@@ -76,11 +76,16 @@ namespace Fls
 
         auto settingsChanged = false;
 
-        settingsChanged = ImGui::SliderFloat("Confidence Threshold##Detection", &mFaceDetectionSettings.confidenceThreshold, 0.0f, 1.0f) || settingsChanged;
-        settingsChanged = ImGui::Checkbox("Show Detection Box", &mFaceDetectionSettings.showDetectionBox) || settingsChanged;
-        settingsChanged = ImGui::ColorEdit4("Box Outline Color", glm::value_ptr(mFaceDetectionSettings.outlineColor)) || settingsChanged;
-        settingsChanged = ImGui::ColorEdit4("Box Fill Color", glm::value_ptr(mFaceDetectionSettings.fillColor)) || settingsChanged;
-        settingsChanged = ImGui::SliderFloat("Box Outline Thickness", &mFaceDetectionSettings.outlineThickness, 0.001f, 0.1f) || settingsChanged;
+        settingsChanged = ImGui::SliderFloat("Confidence Threshold##Detection", 
+            &mFaceDetectionSettings.confidenceThreshold, 0.0f, 1.0f) || settingsChanged;
+        settingsChanged = ImGui::Checkbox("Show Detection Box", 
+            &mFaceDetectionSettings.showDetectionBox) || settingsChanged;
+        settingsChanged = ImGui::ColorEdit4("Box Outline Color", 
+            glm::value_ptr(mFaceDetectionSettings.outlineColor)) || settingsChanged;
+        settingsChanged = ImGui::ColorEdit4("Box Fill Color", 
+            glm::value_ptr(mFaceDetectionSettings.fillColor)) || settingsChanged;
+        settingsChanged = ImGui::SliderFloat("Box Outline Thickness", 
+            &mFaceDetectionSettings.outlineThickness, 0.001f, 0.1f) || settingsChanged;
 
         if(settingsChanged)
         {
@@ -88,18 +93,26 @@ namespace Fls
         }
     }
 
-    void InspectorWindow::drawFaceRecognitionSection() const
+    void InspectorWindow::drawFaceRecognitionSection()
     {
         if (!ImGui::CollapsingHeader("Face Recognition", ImGuiTreeNodeFlags_DefaultOpen))
             return;
 
-        static float confidenceThreshold = 0.3f;
-        static bool showFaceLandmarks = true;
-        static glm::vec4 mLandmarkColor(0.1f, 0.1f, 0.8f, 0.8f);
+        auto settingsChanged = false;
 
-        ImGui::SliderFloat("Confidence Threshold##Recognition", &confidenceThreshold, 0.0f, 1.0f);
-        ImGui::Checkbox("Show Face Landmarks", &showFaceLandmarks);
-        ImGui::ColorEdit4("Landmark Color", glm::value_ptr(mLandmarkColor));
+        settingsChanged = ImGui::SliderFloat("Confidence Threshold##Recognition", 
+            &mFaceRecognitionSettings.confidenceThreshold, 0.0f, 1.0f) || settingsChanged;
+        settingsChanged = ImGui::Checkbox("Show Face Landmarks", 
+            &mFaceRecognitionSettings.showLandmarks) || settingsChanged;
+        settingsChanged = ImGui::SliderFloat("Landmark Size",
+            &mFaceRecognitionSettings.landmarkSize, 0.01f, 0.05f) || settingsChanged;
+        settingsChanged = ImGui::ColorEdit4("Landmark Color", 
+            glm::value_ptr(mFaceRecognitionSettings.landmarkColor)) || settingsChanged;
+
+        if (settingsChanged)
+        {
+            Xenon::ApplicationServices::EventBus::ref().trigger(mFaceRecognitionSettings.toEvent());
+        }
     }
 
     FaceDetectionSettingChangedEvent InspectorWindow::FaceDetectionSettings::toEvent() const
@@ -107,5 +120,10 @@ namespace Fls
         return FaceDetectionSettingChangedEvent(showDetectionBox, confidenceThreshold, 
             outlineThickness, outlineColor, fillColor
         );
+    }
+
+    FaceRecognitionSettingChangedEvent InspectorWindow::FaceRecognitionSettings::toEvent() const
+    {
+        return FaceRecognitionSettingChangedEvent(confidenceThreshold, showLandmarks, landmarkSize, landmarkColor);
     }
 }

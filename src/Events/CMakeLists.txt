@@ -4,5 +4,6 @@ set (FLS_SOURCES_EVENTS
     ${FLS_SRCROOT}/OpenFileEvent.hpp
     ${FLS_SRCROOT}/ResourceSelectedEvent.hpp
     ${FLS_SRCROOT}/FaceDetectionSettingChangedEvent.hpp
+    ${FLS_SRCROOT}/FaceRecognitionSettingChangedEvent.hpp
     PARENT_SCOPE
 )

@@ -6,6 +6,7 @@
 
 #include "Resource/ResourceManager.hpp"
 #include "Detectors/FaceDetector.hpp"
+#include "Detectors/FaceAligner.hpp"
 
 namespace Fls
 {
@@ -25,6 +26,7 @@ namespace Fls
 
         std::unique_ptr<ResourceManager> mResourceManager;
         std::unique_ptr<FaceDetector> mFaceDetector;
+        std::unique_ptr<FaceAligner> mFaceAligner;
     };
 }
 XN_REGISTER_APPLICATION(Fls::FacelinkStudio);

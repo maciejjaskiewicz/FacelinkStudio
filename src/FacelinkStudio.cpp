@@ -12,6 +12,7 @@ namespace Fls
     {
         mResourceManager = std::make_unique<ResourceManager>();
         mFaceDetector = std::make_unique<FaceDetector>();
+        mFaceAligner = std::make_unique<FaceAligner>();
     }
 
     FacelinkStudio::~FacelinkStudio()
@@ -28,6 +29,7 @@ namespace Fls
             "assets/models/res10_300x300_ssd_iter_140000.prototxt",
             "assets/models/res10_300x300_ssd_iter_140000.caffemodel"
         );
+        mFaceAligner->init("assets/models/shape_predictor_68_face_landmarks.dat");
 
         mResourceManager->load("assets/textures/nasa_crew.jpg");
 
@@ -45,9 +47,13 @@ namespace Fls
         if(selectedResource)
         {
             const auto detectionResult = mFaceDetector->detect(selectedResource);
+            const auto alignmentResult = mFaceAligner->align(selectedResource, detectionResult);
 
             Editor::previewWindow->drawFrame(selectedResource->frame);
-            Editor::previewWindow->drawDetectionResult(detectionResult);            
+            Editor::previewWindow->drawDetectionResult(detectionResult);
+            Editor::previewWindow->drawAlignmentResult(alignmentResult);
+
+            Editor::facesWindow->setFaces(selectedResource->id, alignmentResult);
         }
 
         Editor::previewWindow->end();

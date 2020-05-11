@@ -28,12 +28,17 @@ set (FLS_SOURCES
 )
 
 add_executable(FacelinkStudio ${FLS_SOURCES})
+
 target_link_libraries(FacelinkStudio PRIVATE
     Xenon::Options
-    Xenon::Warnings
     Xenon::Engine
     ${CUDA_LIBRARIES}
+)
+
+include(LinkLibraries)
+target_link_libraries_sys_private(FacelinkStudio
     ${OpenCV_LIBS}
+    dlib::dlib
 )
 
 include(Settings)

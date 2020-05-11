@@ -17,6 +17,7 @@ namespace Fls
     std::unique_ptr<PreviewWindow> Editor::previewWindow = std::make_unique<PreviewWindow>();
     std::unique_ptr<ResourceWindow> Editor::resourceWindow = std::make_unique<ResourceWindow>();
     std::unique_ptr<InspectorWindow> Editor::inspectorWindow = std::make_unique<InspectorWindow>();
+    std::unique_ptr<FacesWindow> Editor::facesWindow = std::make_unique<FacesWindow>();
 
     void Editor::init(Xenon::Gui& gui)
     {
@@ -39,16 +40,20 @@ namespace Fls
 
         dockSpace->setInitialWindowsConfiguration([](const ImGuiID mainNodeId)
         {
+            ImGuiID leftDownNodeId;
             ImGuiID rightNodeId, rightDownNodeId;
 
             const auto leftNodeId = ImGui::DockBuilderSplitNode(mainNodeId, ImGuiDir_Left,
                 0.75f, nullptr, &rightNodeId);
+            const auto leftUpNodeId = ImGui::DockBuilderSplitNode(leftNodeId, ImGuiDir_Up,
+                0.80f, nullptr, &leftDownNodeId);
             const auto rightUpNodeId = ImGui::DockBuilderSplitNode(rightNodeId, ImGuiDir_Up,
                 0.65f, nullptr, &rightDownNodeId);
 
-            ImGui::DockBuilderDockWindow("Preview", leftNodeId);
+            ImGui::DockBuilderDockWindow("Preview", leftUpNodeId);
             ImGui::DockBuilderDockWindow("Inspector", rightUpNodeId);
             ImGui::DockBuilderDockWindow("Resources", rightDownNodeId);
+            ImGui::DockBuilderDockWindow("Faces", leftDownNodeId);
         });
 
         previewWindow->init(shaderCache);
@@ -78,6 +83,7 @@ namespace Fls
         previewWindow->updateGui(deltaTime);
         resourceWindow->updateGui(deltaTime);
         inspectorWindow->updateGui(deltaTime);
+        facesWindow->updateGui(deltaTime);
 
         dockSpace->end();
 

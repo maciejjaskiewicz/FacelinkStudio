@@ -4,6 +4,7 @@
 #include "PreviewWindow.hpp"
 #include "ResourceWindow.hpp"
 #include "InspectorWindow.hpp"
+#include "FacesWindow.hpp"
 
 #include <string>
 #include <memory>
@@ -26,6 +27,7 @@ namespace Fls
         static std::unique_ptr<PreviewWindow> previewWindow;
         static std::unique_ptr<ResourceWindow> resourceWindow;
         static std::unique_ptr<InspectorWindow> inspectorWindow;
+        static std::unique_ptr<FacesWindow> facesWindow;
     private:
         static void drawMenuBar();
         static void updateFileDialog(const Xenon::DeltaTime& deltaTime);

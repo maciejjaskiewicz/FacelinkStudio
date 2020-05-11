@@ -53,7 +53,7 @@ namespace Fls
 
         const Xenon::Texture2DConfiguration textureCfg(pixelBuffer.cols(), pixelBuffer.rows(),
             resolveFormat(pixelBuffer.channels()));
-        userResource->frame = Xenon::Texture2D::create(nullptr, textureCfg);
+        userResource->frame = Xenon::Texture2D::create(nullptr, textureCfg, 1);
 
         cv::ogl::Buffer::unbind(cv::ogl::Buffer::PIXEL_UNPACK_BUFFER);
     }
@@ -66,7 +66,7 @@ namespace Fls
 
         const Xenon::Texture2DConfiguration textureCfg(thumbnailPixels.cols, thumbnailPixels.rows, 
             resolveFormat(thumbnailPixels.channels()));
-        userResource->thumbnail = Xenon::Texture2D::create(nullptr, textureCfg);
+        userResource->thumbnail = Xenon::Texture2D::create(nullptr, textureCfg, 1);
 
         cv::ogl::Buffer::unbind(cv::ogl::Buffer::PIXEL_UNPACK_BUFFER);
     }

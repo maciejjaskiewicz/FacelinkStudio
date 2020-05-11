@@ -6,6 +6,7 @@
 #include <Xenon/Core/ApplicationServices.hpp>
 #include <imgui.h>
 #include <glm/gtc/matrix_transform.hpp>
+#include "Events/FaceRecognitionSettingChangedEvent.hpp"
 
 namespace Fls
 {
@@ -44,6 +45,7 @@ namespace Fls
 
         mDetectionBoxShader = shaderCache.load("detectionBox");
         mTextureShader = shaderCache.load("texture");
+        mQuadShader = shaderCache.load("flat");
 
         mCamera = std::make_shared<Xenon::OrthographicCamera>(Xenon::OrthographicCameraProjConfiguration{
             -1.0f, 1.0f, -1.0f, 1.0f
@@ -56,6 +58,14 @@ namespace Fls
             mDetectionBoxOutlineWidth = event.outlineThickness;
             mDetectionBoxOutline = event.outlineColor;
             mDetectionBoxFill = event.fillColor;
+        });
+
+        Xenon::ApplicationServices::EventBus::ref().subscribe<FaceRecognitionSettingChangedEvent>(
+            [this](const FaceRecognitionSettingChangedEvent& event)
+        {
+            mShowFaceLandmarks = event.showLandmarks;
+            mFaceLandmarkSize = event.landmarkSize;
+            mFaceLandmarkColor = event.landmarkColor;
         });
     }
 
@@ -83,9 +93,10 @@ namespace Fls
         auto& renderer = Xenon::ApplicationServices::Renderer::ref();
 
         mCurrentFrameSize = Xenon::WindowResolution(frame->width(), frame->height());
+        mCurrentDisplayQuadAspect = calculateDisplayQuadAspect(frame->width(), frame->height());
 
         glm::mat4 transform = glm::mat4(1.0f);
-        transform *= fitDisplayQuadToFrame(frame->width(), frame->height());
+        transform *= fitDisplayQuadToFrame();
 
         frame->bind();
         mTextureShader->bind();
@@ -107,7 +118,7 @@ namespace Fls
 
         for(const auto& detection : detectionResult)
         {
-            const auto ndcDetectionBox = translateDetectionBoxToNdc(detection, mCurrentFrameSize.width, mCurrentFrameSize.height);
+            const auto ndcDetectionBox = translateBoxToNdc(glm::vec2(detection.x1, detection.y1), glm::vec2(detection.x2, detection.y2));
 
             auto transform = glm::translate(glm::mat4(1.0f),
                 glm::vec3(ndcDetectionBox.x, -ndcDetectionBox.y, 0.0f));
@@ -115,6 +126,36 @@ namespace Fls
             transform *= glm::scale(glm::mat4(1.0f), glm::vec3(ndcDetectionBox.width, ndcDetectionBox.height, 0.0f));
 
             renderer.submit(mDetectionBoxShader, mQuadVertexArray, transform);
+        }
+    }
+
+    void PreviewWindow::drawAlignmentResult(const std::vector<std::shared_ptr<FaceAlignmentResult>>& alignmentResult) const
+    {
+        if (alignmentResult.empty() || !mShowFaceLandmarks)
+            return;
+
+        auto& renderer = Xenon::ApplicationServices::Renderer::ref();
+
+        mQuadShader->bind();
+        mQuadShader->setFloat4("uColor", mFaceLandmarkColor);
+
+        for(const auto& face : alignmentResult)
+        {
+            const auto minFaceDimension = std::min(face->srcFaceSize.x, face->srcFaceSize.y);
+            const auto landmarkQuadSize = minFaceDimension * mFaceLandmarkSize;
+
+            for (const auto& landmark : face->landmarks)
+            {
+                const auto ndcQuad = translateBoxToNdc(glm::vec2(landmark.x, landmark.y),
+                    glm::vec2(landmark.x + landmarkQuadSize, landmark.y + landmarkQuadSize));
+
+                auto transform = glm::translate(glm::mat4(1.0f),
+                    glm::vec3(ndcQuad.x, -ndcQuad.y, 0.0f));
+
+                transform *= glm::scale(glm::mat4(1.0f), glm::vec3(ndcQuad.width, ndcQuad.height, 0.0f));
+
+                renderer.submit(mQuadShader, mQuadVertexArray, transform);
+            }
         }
     }
 
@@ -160,11 +201,9 @@ namespace Fls
         ImGui::PopStyleColor();
     }
 
-    glm::mat4 PreviewWindow::fitDisplayQuadToFrame(const uint32_t frameWidth, const uint32_t frameHeight) const
+    glm::mat4 PreviewWindow::fitDisplayQuadToFrame() const
     {
-        const auto displayQuadAspect = calculateDisplayQuadAspect(frameWidth, frameHeight);
-
-        return glm::scale(glm::mat4(1.0f), glm::vec3(displayQuadAspect.x, displayQuadAspect.y, 1.0f));
+        return glm::scale(glm::mat4(1.0f), glm::vec3(mCurrentDisplayQuadAspect.x, mCurrentDisplayQuadAspect.y, 1.0f));
     }
 
     glm::vec2 PreviewWindow::calculateDisplayQuadAspect(const uint32_t frameWidth, const uint32_t frameHeight) const
@@ -183,33 +222,32 @@ namespace Fls
         return glm::vec2(displayQuadWidth, displayQuadHeight);
     }
 
-    PreviewWindow::FaceDetectionBoxNdc PreviewWindow::translateDetectionBoxToNdc(const FaceDetectionResult& detectionResult, 
-        const uint32_t frameWidth, const uint32_t frameHeight) const
+    PreviewWindow::BoxNdc PreviewWindow::translateBoxToNdc(const glm::vec2 point1, const glm::vec2 point2) const
     {
-        const auto detQuadCenterX = static_cast<float>(detectionResult.x1 + detectionResult.x2) / 2;
-        const auto detQuadCenterY = static_cast<float>(detectionResult.y1 + detectionResult.y2) / 2;
+        const auto detQuadCenterX = static_cast<float>(point1.x + point2.x) / 2;
+        const auto detQuadCenterY = static_cast<float>(point1.y + point2.y) / 2;
 
-        const auto detQuadWidth = static_cast<float>(detectionResult.x2 - detectionResult.x1);
-        const auto detQuadHeight = static_cast<float>(detectionResult.y2 - detectionResult.y1);
+        const auto detQuadWidth = static_cast<float>(point2.x - point1.x);
+        const auto detQuadHeight = static_cast<float>(point2.y - point1.y);
 
-        const auto displayQuadAspect = calculateDisplayQuadAspect(frameWidth, frameHeight);
+        const auto displayQuadAspect = mCurrentDisplayQuadAspect;
 
         const auto detQuadNdcX = Math::interpolate(detQuadCenterX,
-            0.0f, static_cast<float>(frameWidth),
+            0.0f, static_cast<float>(mCurrentFrameSize.width),
             -displayQuadAspect.x, displayQuadAspect.x);
 
         const auto detQuadNdcY = Math::interpolate(detQuadCenterY,
-            0.0f, static_cast<float>(frameHeight),
+            0.0f, static_cast<float>(mCurrentFrameSize.height),
             -displayQuadAspect.y, displayQuadAspect.y);
 
         const auto detQuadNdcWidth = Math::interpolate(detQuadWidth,
-            0.0f, static_cast<float>(frameWidth),
+            0.0f, static_cast<float>(mCurrentFrameSize.width),
             0.0f, displayQuadAspect.x);
         const auto detQuadNdcHeight = Math::interpolate(detQuadHeight,
-            0.0f, static_cast<float>(frameHeight),
+            0.0f, static_cast<float>(mCurrentFrameSize.height),
             0.0f, displayQuadAspect.y);
 
-        return FaceDetectionBoxNdc
+        return BoxNdc
         {
             detQuadNdcX,
             detQuadNdcY,
