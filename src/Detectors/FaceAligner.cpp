@@ -42,7 +42,6 @@ namespace Fls
 
                 chipsDetails.emplace_back(dlib::get_face_chip_details(shape, 200, 0.2));
 
-
                 for (uint32_t i = 0; i < shape.num_parts(); i++)
                 {
                     const auto landmark = shape.part(i);

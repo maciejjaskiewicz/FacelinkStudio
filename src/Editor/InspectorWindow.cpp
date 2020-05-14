@@ -1,10 +1,12 @@
 #include "InspectorWindow.hpp"
 
 #include "Events/FaceDetectionSettingChangedEvent.hpp"
+#include "Events/PreviewCameraResetEvent.hpp"
 
 #include <Xenon/Core/ApplicationServices.hpp>
 
 #include <imgui.h>
+#include <imgui_internal.h>
 #include <numeric>
 #include <glm/gtc/type_ptr.hpp>
 #include <cuda_runtime.h>
@@ -17,6 +19,16 @@ namespace Fls
     {
         mApiDetails = Xenon::ApplicationServices::Renderer::ref().getDetails();
 
+        Xenon::ApplicationServices::EventBus::ref().subscribe<GeneralSettingsChangedEvent>(
+            [this](const GeneralSettingsChangedEvent& event)
+        {
+            if (event.triggeredByCamera)
+            {
+                mGeneralSettings.cameraEnabled = event.cameraEnabled;
+                mGeneralSettings.cameraZoom = event.cameraZoom;
+            }
+        });
+
         cudaRuntimeGetVersion(&mCudaVersion);
     }
 
@@ -25,6 +37,7 @@ namespace Fls
         ImGui::Begin("Inspector");
 
         drawDiagnosticSection(deltaTime);
+        drawGeneralSection();
         drawFaceDetectionSection();
         drawFaceRecognitionSection();
 
@@ -67,6 +80,40 @@ namespace Fls
         ImGui::Text("Graphics API: %s %s", mApiDetails.name.c_str(), mApiDetails.version.c_str());
         ImGui::Text("Renderer: %s", mApiDetails.renderer.c_str());
         ImGui::Text("CUDA Version: %d.%d", mCudaVersion / 1000, mCudaVersion % 100);
+    }
+
+    void InspectorWindow::drawGeneralSection()
+    {
+        if (!ImGui::CollapsingHeader("General", ImGuiTreeNodeFlags_DefaultOpen))
+            return;
+
+        auto settingsChanged = false;
+
+        settingsChanged = ImGui::ColorEdit4("Background Color", 
+            glm::value_ptr(mGeneralSettings.backgroundColor)) || settingsChanged;
+
+        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.9f);
+
+        ImGui::Checkbox("Camera", &mGeneralSettings.cameraEnabled);
+
+        ImGui::PopItemFlag();
+        ImGui::PopStyleVar();
+
+        ImGui::SameLine();
+
+        if (ImGui::Button("Reset"))
+        {
+            Xenon::ApplicationServices::EventBus::ref().trigger<PreviewCameraResetEvent>();
+        }
+
+        settingsChanged = ImGui::SliderFloat("Camera Zoom", &mGeneralSettings.cameraZoom, 
+            1.0f, 5.0f, "%.1f") || settingsChanged;
+
+        if(settingsChanged)
+        {
+            Xenon::ApplicationServices::EventBus::ref().trigger(mGeneralSettings.toEvent());
+        }
     }
 
     void InspectorWindow::drawFaceDetectionSection()
@@ -113,6 +160,11 @@ namespace Fls
         {
             Xenon::ApplicationServices::EventBus::ref().trigger(mFaceRecognitionSettings.toEvent());
         }
+    }
+
+    GeneralSettingsChangedEvent InspectorWindow::GeneralSettings::toEvent() const
+    {
+        return GeneralSettingsChangedEvent(backgroundColor, cameraEnabled, cameraZoom);
     }
 
     FaceDetectionSettingChangedEvent InspectorWindow::FaceDetectionSettings::toEvent() const

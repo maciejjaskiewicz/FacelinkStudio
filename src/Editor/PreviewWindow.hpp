@@ -2,6 +2,7 @@
 
 #include "Detectors/FaceDetectionResult.hpp"
 #include "Detectors/FaceAlignmentResult.hpp"
+#include "PreviewCameraController.hpp"
 
 #include <Xenon/Graphics.hpp>
 #include <Xenon/Core/Window/WindowResolution.hpp>
@@ -15,10 +16,10 @@ namespace Fls
 
         void init(Xenon::ResourceCache<Xenon::Shader>& shaderCache);
 
-        void begin() const;
+        void begin(const Xenon::DeltaTime& deltaTime) const;
         void end() const;
 
-        void drawFrame(const std::shared_ptr<Xenon::Texture2D>& frame);
+        void drawFrame(int64 frameId, const std::shared_ptr<Xenon::Texture2D>& frame);
         void drawDetectionResult(const std::vector<FaceDetectionResult>& detectionResult) const;
         void drawAlignmentResult(const std::vector<std::shared_ptr<FaceAlignmentResult>>& alignmentResult) const;
 
@@ -40,13 +41,16 @@ namespace Fls
         Xenon::WindowResolution mCurrentFrameSize{};
         glm::vec2 mCurrentDisplayQuadAspect{};
 
+        std::unique_ptr<PreviewCameraController> mCameraController;
         std::shared_ptr<Xenon::FrameBuffer> mFrameBuffer;
-        std::shared_ptr<Xenon::OrthographicCamera> mCamera;
 
         std::shared_ptr<Xenon::Shader> mDetectionBoxShader, mTextureShader, mQuadShader;
         std::shared_ptr<Xenon::VertexBuffer> mQuadVertexBuffer;
         std::shared_ptr<Xenon::IndexBuffer> mIndexBuffer;
         std::shared_ptr<Xenon::VertexArray> mQuadVertexArray;
+
+        int64 mLastFrameId{};
+        glm::vec4 mBackgroundColor{ 0.15f, 0.15f, 0.15f, 1.0f };
 
         bool mShowDetectionBoxes{ true };
         float mDetectionBoxOutlineWidth{ 0.02f };

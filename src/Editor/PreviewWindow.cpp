@@ -7,6 +7,7 @@
 #include <imgui.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include "Events/FaceRecognitionSettingChangedEvent.hpp"
+#include "Events/GeneralSettingsChangedEvent.hpp"
 
 namespace Fls
 {
@@ -47,9 +48,7 @@ namespace Fls
         mTextureShader = shaderCache.load("texture");
         mQuadShader = shaderCache.load("flat");
 
-        mCamera = std::make_shared<Xenon::OrthographicCamera>(Xenon::OrthographicCameraProjConfiguration{
-            -1.0f, 1.0f, -1.0f, 1.0f
-        });
+        mCameraController = std::make_unique<PreviewCameraController>(mWindowSize.width / mWindowSize.height);
 
         Xenon::ApplicationServices::EventBus::ref().subscribe<FaceDetectionSettingChangedEvent>(
             [this](const FaceDetectionSettingChangedEvent& event)
@@ -67,16 +66,25 @@ namespace Fls
             mFaceLandmarkSize = event.landmarkSize;
             mFaceLandmarkColor = event.landmarkColor;
         });
+
+        Xenon::ApplicationServices::EventBus::ref().subscribe<GeneralSettingsChangedEvent>(
+            [this](const GeneralSettingsChangedEvent& event)
+        {
+            if (!event.triggeredByCamera)
+                mBackgroundColor = event.backgroundColor;
+        });
     }
 
-    void PreviewWindow::begin() const
+    void PreviewWindow::begin(const Xenon::DeltaTime& deltaTime) const
     {
         auto& renderer = Xenon::ApplicationServices::Renderer::ref();
 
-        mFrameBuffer->bind();
-        renderer.beginScene(*mCamera);
+        mCameraController->update(deltaTime);
 
-        Xenon::RenderCmd::setClearColor(glm::vec4(0.15f, 0.15f, 0.15f, 1.0f));
+        mFrameBuffer->bind();
+        renderer.beginScene(mCameraController->camera());
+
+        Xenon::RenderCmd::setClearColor(mBackgroundColor);
         Xenon::RenderCmd::clear();
     }
 
@@ -88,9 +96,15 @@ namespace Fls
         mFrameBuffer->unbind();
     }
 
-    void PreviewWindow::drawFrame(const std::shared_ptr<Xenon::Texture2D>& frame)
+    void PreviewWindow::drawFrame(const int64 frameId, const std::shared_ptr<Xenon::Texture2D>& frame)
     {
         auto& renderer = Xenon::ApplicationServices::Renderer::ref();
+
+        if(mLastFrameId != frameId)
+        {
+            mCameraController->reset();
+            mLastFrameId = frameId;
+        }
 
         mCurrentFrameSize = Xenon::WindowResolution(frame->width(), frame->height());
         mCurrentDisplayQuadAspect = calculateDisplayQuadAspect(frame->width(), frame->height());
@@ -181,12 +195,7 @@ namespace Fls
             mFrameBuffer = Xenon::FrameBuffer::create(windowSize.width, windowSize.height);
             mWindowSize = windowSize;
 
-            mCamera->setProjection(Xenon::OrthographicCameraProjConfiguration{
-                -windowSize.aspectRatio(),
-                windowSize.aspectRatio(),
-                -1.0f,
-                1.0f
-            });
+            mCameraController->setAspect(windowSize.aspectRatio());
         }
 
         auto* texturePtr = reinterpret_cast<void*>(static_cast<intptr_t>(mFrameBuffer->texture().id()));

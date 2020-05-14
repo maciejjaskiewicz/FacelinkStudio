@@ -41,7 +41,7 @@ namespace Fls
         Xenon::RenderCmd::setClearColor(mClearColor);
         Xenon::RenderCmd::clear();
 
-        Editor::previewWindow->begin();
+        Editor::previewWindow->begin(deltaTime);
 
         const auto* selectedResource = mResourceManager->selectedResource();
         if(selectedResource)
@@ -49,7 +49,7 @@ namespace Fls
             const auto detectionResult = mFaceDetector->detect(selectedResource);
             const auto alignmentResult = mFaceAligner->align(selectedResource, detectionResult);
 
-            Editor::previewWindow->drawFrame(selectedResource->frame);
+            Editor::previewWindow->drawFrame(selectedResource->id, selectedResource->frame);
             Editor::previewWindow->drawDetectionResult(detectionResult);
             Editor::previewWindow->drawAlignmentResult(alignmentResult);
 
