@@ -65,6 +65,7 @@ namespace Fls
         previewWindow.reset();
         resourceWindow.reset();
         inspectorWindow.reset();
+        facesWindow.reset();
 
         dockSpace.reset();
 

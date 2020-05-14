@@ -22,7 +22,14 @@ endif()
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Third Party Libraries
+include(Conan)
+conan_cmake_run(CONANFILE conanfile.txt
+    BASIC_SETUP CMAKE_TARGETS NO_OUTPUT_DIRS
+    BUILD missing
+)
+
 add_subdirectory(vendor)
+
 find_package(CUDA REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(dlib REQUIRED)

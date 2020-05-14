@@ -5,6 +5,7 @@ add_subdirectory(Resource)
 add_subdirectory(Events)
 add_subdirectory(Utils)
 add_subdirectory(Detectors)
+add_subdirectory(Persistence)
 
 set (FLS_SOURCES_ROOT
     ${FLS_ROOT}/FacelinkStudio.cpp
@@ -17,6 +18,7 @@ source_group("Resource" FILES ${FLS_SOURCES_RESOURCE})
 source_group("Events" FILES ${FLS_SOURCES_EVENTS})
 source_group("Utils" FILES ${FLS_SOURCES_UTILS})
 source_group("Detectors" FILES ${FLS_SOURCES_DETECTORS})
+source_group("Persistence" FILES ${FLS_SOURCES_PERSISTENCE})
 
 set (FLS_SOURCES
     ${FLS_SOURCES_ROOT}
@@ -25,6 +27,7 @@ set (FLS_SOURCES
     ${FLS_SOURCES_EVENTS}
     ${FLS_SOURCES_UTILS}
     ${FLS_SOURCES_DETECTORS}
+    ${FLS_SOURCES_PERSISTENCE}
 )
 
 add_executable(FacelinkStudio ${FLS_SOURCES})
