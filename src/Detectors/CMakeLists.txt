@@ -9,5 +9,8 @@ set (FLS_SOURCES_DETECTORS
     ${FLS_SRCROOT}/FaceAlignmentResult.hpp
     ${FLS_SRCROOT}/FaceEmbedder.cpp
     ${FLS_SRCROOT}/FaceEmbedder.hpp
+    ${FLS_SRCROOT}/FaceClassifier.cpp
+    ${FLS_SRCROOT}/FaceClassifier.hpp
+    ${FLS_SRCROOT}/FaceClassificationResult.hpp
     PARENT_SCOPE
 )

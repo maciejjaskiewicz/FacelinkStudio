@@ -10,11 +10,13 @@ namespace Fls
 {
     FacesWindow::FacesWindow() = default;
 
-    void FacesWindow::setFaces(const int64 resourceId, const std::vector<std::shared_ptr<FaceAlignmentResult>>& faces)
+    void FacesWindow::setFaces(const int64 resourceId, const std::vector<std::shared_ptr<FaceAlignmentResult>>& faces, 
+        const std::vector<FaceClassificationResult>& predictions)
     {
         if(mCurrentResourceId != resourceId || mFaces.size() != faces.size())
         {
             mFaces = faces;
+            mPredictions = predictions;
             mFaceTextures.clear();
 
             for (const auto& face : faces)
@@ -66,7 +68,7 @@ namespace Fls
             ImGui::BeginGroup();
 
             ImGui::ImageButton(texturePtr, { itemSize - 20, itemSize - 16 });
-            ImGui::TextWrapped("Unknown");
+            ImGui::TextWrapped(mPredictions[idx].name.c_str());
 
             ImGui::EndGroup();
 

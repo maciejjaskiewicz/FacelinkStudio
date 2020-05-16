@@ -8,6 +8,7 @@
 #include "Detectors/FaceDetector.hpp"
 #include "Detectors/FaceAligner.hpp"
 #include "Detectors/FaceEmbedder.hpp"
+#include "Detectors/FaceClassifier.hpp"
 
 namespace Fls
 {
@@ -25,11 +26,12 @@ namespace Fls
     private:
         glm::vec4 mClearColor{ 0.15f, 0.15f, 0.15f, 1.0f };
 
-        std::unique_ptr<FlsDatabase> mDatabase;
+        std::shared_ptr<FlsDatabase> mDatabase;
         std::unique_ptr<ResourceManager> mResourceManager;
         std::unique_ptr<FaceDetector> mFaceDetector;
         std::unique_ptr<FaceAligner> mFaceAligner;
         std::unique_ptr<FaceEmbedder> mFaceEmbedder;
+        std::unique_ptr<FaceClassifier> mFaceClassifier;
     };
 }
 XN_REGISTER_APPLICATION(Fls::FacelinkStudio);
