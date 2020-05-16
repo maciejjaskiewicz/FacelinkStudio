@@ -7,6 +7,7 @@
 #include "Persistence/FlsDatabase.hpp"
 #include "Detectors/FaceDetector.hpp"
 #include "Detectors/FaceAligner.hpp"
+#include "Detectors/FaceEmbedder.hpp"
 
 namespace Fls
 {
@@ -28,6 +29,7 @@ namespace Fls
         std::unique_ptr<ResourceManager> mResourceManager;
         std::unique_ptr<FaceDetector> mFaceDetector;
         std::unique_ptr<FaceAligner> mFaceAligner;
+        std::unique_ptr<FaceEmbedder> mFaceEmbedder;
     };
 }
 XN_REGISTER_APPLICATION(Fls::FacelinkStudio);

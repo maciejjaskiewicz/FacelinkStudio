@@ -7,5 +7,7 @@ set (FLS_SOURCES_DETECTORS
     ${FLS_SRCROOT}/FaceAligner.cpp
     ${FLS_SRCROOT}/FaceAligner.hpp
     ${FLS_SRCROOT}/FaceAlignmentResult.hpp
+    ${FLS_SRCROOT}/FaceEmbedder.cpp
+    ${FLS_SRCROOT}/FaceEmbedder.hpp
     PARENT_SCOPE
 )
