@@ -11,18 +11,21 @@ namespace Fls
     class Database
     {
     public:
-        Database() = default;
-        Database(const std::string& dbPath);
+        explicit Database() = default;
+        explicit Database(const std::string& dbPath);
+        virtual ~Database() = default;
 
         void open(const std::string& dbPath);
-        void exec(const std::string& sqlStatement);
+        virtual void exec(const std::string& sqlStatement);
+        virtual void ensureCreated() = 0;
 
         XN_NODISCARD bool isOpen() const;
+        XN_NODISCARD bool tableExists(const std::string& tableName);
         XN_NODISCARD std::shared_ptr<sqlite3> get() const;
 
         Database(const Database&) = delete;
         const Database& operator=(const Database&) = delete;
-    private:
+    protected:
         std::string mDbPath;
         std::shared_ptr<sqlite3> mDb;
 

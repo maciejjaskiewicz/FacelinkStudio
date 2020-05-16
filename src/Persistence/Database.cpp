@@ -27,12 +27,26 @@ namespace Fls
 
     void Database::exec(const std::string& sqlStatement)
     {
+        XN_ASSERT(isOpen());
+
         SqlStatement(*this, sqlStatement).exec();
     }
 
     bool Database::isOpen() const
     {
         return mDb != nullptr;
+    }
+
+    bool Database::tableExists(const std::string& tableName)
+    {
+        XN_ASSERT(isOpen());
+
+        const auto sql = "SELECT COUNT(*) FROM sqlite_master WHERE name = '" + tableName + "'";
+
+        SqlStatement st(*this, sql);
+        st.exec();
+
+        return st.getColumnAsInt(0) == 1;
     }
 
     std::shared_ptr<sqlite3> Database::get() const

@@ -2,9 +2,9 @@
 
 #include <Xenon/Xenon.hpp>
 #include <glm/glm.hpp>
-#include <opencv2/core/opengl.hpp>
 
 #include "Resource/ResourceManager.hpp"
+#include "Persistence/FlsDatabase.hpp"
 #include "Detectors/FaceDetector.hpp"
 #include "Detectors/FaceAligner.hpp"
 
@@ -24,6 +24,7 @@ namespace Fls
     private:
         glm::vec4 mClearColor{ 0.15f, 0.15f, 0.15f, 1.0f };
 
+        std::unique_ptr<FlsDatabase> mDatabase;
         std::unique_ptr<ResourceManager> mResourceManager;
         std::unique_ptr<FaceDetector> mFaceDetector;
         std::unique_ptr<FaceAligner> mFaceAligner;

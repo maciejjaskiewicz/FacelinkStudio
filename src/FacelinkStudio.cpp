@@ -10,6 +10,7 @@ namespace Fls
     FacelinkStudio::FacelinkStudio(const Xenon::ApplicationConfiguration& config)
         : Application(config)
     {
+        mDatabase = std::make_unique<FlsDatabase>();
         mResourceManager = std::make_unique<ResourceManager>();
         mFaceDetector = std::make_unique<FaceDetector>();
         mFaceAligner = std::make_unique<FaceAligner>();
@@ -23,6 +24,9 @@ namespace Fls
     void FacelinkStudio::init()
     {
         Editor::init(*mGui);
+
+        mDatabase->open("fls.db");
+        mDatabase->ensureCreated();
 
         mResourceManager->init();
         mFaceDetector->init(

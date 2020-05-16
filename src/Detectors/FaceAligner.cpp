@@ -40,7 +40,7 @@ namespace Fls
 
                 faceAlignmentResult->srcFaceSize = glm::vec2(face.x2 - face.x1, face.y2 - face.y1);
 
-                chipsDetails.emplace_back(dlib::get_face_chip_details(shape, 200, 0.2));
+                chipsDetails.emplace_back(dlib::get_face_chip_details(shape, 200, 0.25));
 
                 for (uint32_t i = 0; i < shape.num_parts(); i++)
                 {
