@@ -13,9 +13,9 @@ namespace Fls
         void setResources(const std::vector<UserResource*>& resources);
 
         void updateGui(const Xenon::DeltaTime& deltaTime);
+    private:
         void drawWindow(const Xenon::DeltaTime& deltaTime);
 
-    private:
         std::vector<UserResource*> mResources;
     };
 }

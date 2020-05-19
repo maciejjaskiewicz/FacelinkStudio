@@ -4,7 +4,6 @@
 #include <glm/glm.hpp>
 
 #include "Resource/ResourceManager.hpp"
-#include "Persistence/FlsDatabase.hpp"
 #include "Detectors/FaceDetector.hpp"
 #include "Detectors/FaceAligner.hpp"
 #include "Detectors/FaceEmbedder.hpp"
@@ -26,7 +25,6 @@ namespace Fls
     private:
         glm::vec4 mClearColor{ 0.15f, 0.15f, 0.15f, 1.0f };
 
-        std::shared_ptr<FlsDatabase> mDatabase;
         std::unique_ptr<ResourceManager> mResourceManager;
         std::unique_ptr<FaceDetector> mFaceDetector;
         std::unique_ptr<FaceAligner> mFaceAligner;

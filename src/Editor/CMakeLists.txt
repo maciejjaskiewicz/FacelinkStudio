@@ -15,5 +15,7 @@ set (FLS_SOURCES_EDITOR
     ${FLS_SRCROOT}/InspectorWindow.hpp
     ${FLS_SRCROOT}/FacesWindow.cpp
     ${FLS_SRCROOT}/FacesWindow.hpp
+    ${FLS_SRCROOT}/DatabaseWindow.cpp
+    ${FLS_SRCROOT}/DatabaseWindow.hpp
     PARENT_SCOPE
 )

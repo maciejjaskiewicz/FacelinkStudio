@@ -24,6 +24,7 @@ namespace Fls
         void bindString(uint32_t parameterId, const std::string& item);
         void bindBlob(uint32_t parameterId, const std::vector<uint8_t>& item);
         void bindStream(uint32_t parameterId, const std::ostringstream& item);
+        void bindNull(uint32_t parameterId);
 
         XN_NODISCARD std::string getColumnName(uint32_t idx) const;
 
@@ -33,6 +34,7 @@ namespace Fls
         XN_NODISCARD std::istringstream getColumnAsStream(uint32_t idx) const;
 
         XN_NODISCARD uint32_t columns() const;
+        XN_NODISCARD int lastInsertedId() const;
         XN_NODISCARD const std::string& sqlString() const;
 
         SqlStatement(const SqlStatement&) = delete;

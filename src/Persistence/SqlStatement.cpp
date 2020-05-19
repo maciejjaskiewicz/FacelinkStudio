@@ -117,6 +117,18 @@ namespace Fls
         }
     }
 
+    void SqlStatement::bindNull(const uint32_t parameterId)
+    {
+        reset();
+
+        const auto status = sqlite3_bind_null(mStmt, parameterId);
+
+        if (status != SQLITE_OK)
+        {
+            throw std::exception(sqlite3_errmsg(mDb.get()));
+        }
+    }
+
     std::string SqlStatement::getColumnName(const uint32_t idx) const
     {
         return std::string(sqlite3_column_name(mStmt, idx));
@@ -161,6 +173,11 @@ namespace Fls
         }
 
         return 0;
+    }
+
+    int SqlStatement::lastInsertedId() const
+    {
+        return static_cast<int>(sqlite3_last_insert_rowid(mDb.get()));
     }
 
     const std::string& SqlStatement::sqlString() const

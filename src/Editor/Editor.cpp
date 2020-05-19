@@ -1,6 +1,7 @@
 #include "Editor.hpp"
 
 #include "Events/OpenFileEvent.hpp"
+#include "Events/OpenDatabaseEvent.hpp"
 
 #include <Xenon/Graphics.hpp>
 #include <Xenon/Core/Gui/Gui.hpp>
@@ -18,6 +19,7 @@ namespace Fls
     std::unique_ptr<ResourceWindow> Editor::resourceWindow = std::make_unique<ResourceWindow>();
     std::unique_ptr<InspectorWindow> Editor::inspectorWindow = std::make_unique<InspectorWindow>();
     std::unique_ptr<FacesWindow> Editor::facesWindow = std::make_unique<FacesWindow>();
+    std::unique_ptr<DatabaseWindow> Editor::databaseWindow = std::make_unique<DatabaseWindow>();
 
     void Editor::init(Xenon::Gui& gui)
     {
@@ -58,6 +60,7 @@ namespace Fls
 
         previewWindow->init(shaderCache);
         inspectorWindow->init();
+        databaseWindow->init();
     }
 
     void Editor::shutdown()
@@ -66,6 +69,7 @@ namespace Fls
         resourceWindow.reset();
         inspectorWindow.reset();
         facesWindow.reset();
+        databaseWindow.reset();
 
         dockSpace.reset();
 
@@ -78,13 +82,13 @@ namespace Fls
 
         dockSpace->begin();
 
-        //ImGui::ShowMetricsWindow();
         //ImGui::ShowDemoWindow();
 
         previewWindow->updateGui(deltaTime);
         resourceWindow->updateGui(deltaTime);
         inspectorWindow->updateGui(deltaTime);
         facesWindow->updateGui(deltaTime);
+        databaseWindow->updateGui(deltaTime);
 
         dockSpace->end();
 
@@ -115,6 +119,7 @@ namespace Fls
 
             if (ImGui::MenuItem("Database"))
             {
+                Xenon::ApplicationServices::EventBus::ref().enqueue<OpenDatabaseEvent>();
             }
 
             if (ImGui::MenuItem("About"))

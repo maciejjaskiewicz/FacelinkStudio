@@ -1,6 +1,8 @@
 #include "DataUtils.hpp"
 
 #include <opencv2/core/mat.hpp>
+#include <opencv2/cudaimgproc.hpp>
+#include <opencv2/core/opengl.hpp>
 
 namespace Fls
 {
@@ -31,5 +33,24 @@ namespace Fls
         }
 
         return ss.str();
+    }
+
+    std::shared_ptr<Xenon::Texture2D> DataUtils::imgToTexture(const cv::Mat& mat)
+    {
+        cv::cuda::GpuMat dRgb;
+        const cv::cuda::GpuMat dImg(mat);
+
+        cv::cuda::cvtColor(dImg, dRgb, cv::COLOR_BGR2RGB);
+
+        const cv::ogl::Buffer buffer(dRgb, cv::ogl::Buffer::PIXEL_UNPACK_BUFFER, true);
+        buffer.bind(cv::ogl::Buffer::PIXEL_UNPACK_BUFFER);
+
+        const Xenon::Texture2DConfiguration textureCfg(dImg.cols, dImg.rows,
+            Xenon::TextureFormat::RGB);
+        const auto texture = Xenon::Texture2D::create(nullptr, textureCfg, 1);
+
+        cv::ogl::Buffer::unbind(cv::ogl::Buffer::PIXEL_UNPACK_BUFFER);
+
+        return texture;
     }
 }

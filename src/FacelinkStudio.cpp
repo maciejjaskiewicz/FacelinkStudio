@@ -1,5 +1,6 @@
 #include "FacelinkStudio.hpp"
 
+#include "FacelinkStudioServices.hpp"
 #include "Editor/Editor.hpp"
 
 #include <Xenon/Graphics.hpp>
@@ -10,7 +11,6 @@ namespace Fls
     FacelinkStudio::FacelinkStudio(const Xenon::ApplicationConfiguration& config)
         : Application(config)
     {
-        mDatabase = std::make_unique<FlsDatabase>();
         mResourceManager = std::make_unique<ResourceManager>();
         mFaceDetector = std::make_unique<FaceDetector>();
         mFaceAligner = std::make_unique<FaceAligner>();
@@ -25,10 +25,11 @@ namespace Fls
 
     void FacelinkStudio::init()
     {
-        Editor::init(*mGui);
+        FlsServices::Database::createAndSet();
+        FlsServices::Database::ref().open("fls.db");
+        FlsServices::Database::ref().ensureCreated();
 
-        mDatabase->open("fls.db");
-        mDatabase->ensureCreated();
+        Editor::init(*mGui);      
 
         mResourceManager->init();
         mFaceDetector->init(
@@ -37,7 +38,7 @@ namespace Fls
         );
         mFaceAligner->init("assets/models/shape_predictor_68_face_landmarks.dat");
         mFaceEmbedder->init("assets/models/openface_nn4.small2.v1.t7");
-        mFaceClassifier->init(mDatabase);
+        mFaceClassifier->init(FlsServices::Database::get());
 
         mResourceManager->load("assets/textures/nasa_crew.jpg");
 
@@ -63,7 +64,7 @@ namespace Fls
             Editor::previewWindow->drawDetectionResult(detectionResult);
             Editor::previewWindow->drawAlignmentResult(alignmentResult);
 
-            Editor::facesWindow->setFaces(selectedResource->id, alignmentResult, classificationResult);
+            Editor::facesWindow->setFaces(selectedResource->id, alignmentResult, embeddingResult, classificationResult);
         }
 
         Editor::previewWindow->end();

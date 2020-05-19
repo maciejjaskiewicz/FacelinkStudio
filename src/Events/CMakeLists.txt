@@ -7,5 +7,7 @@ set (FLS_SOURCES_EVENTS
     ${FLS_SRCROOT}/PreviewCameraResetEvent.hpp
     ${FLS_SRCROOT}/FaceDetectionSettingChangedEvent.hpp
     ${FLS_SRCROOT}/FaceRecognitionSettingChangedEvent.hpp
+    ${FLS_SRCROOT}/FaceSelectedEvent.hpp
+    ${FLS_SRCROOT}/OpenDatabaseEvent.hpp
     PARENT_SCOPE
 )

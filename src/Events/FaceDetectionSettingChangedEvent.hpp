@@ -1,7 +1,6 @@
 #pragma once
 
-#include "Xenon/Services/Event/Event.hpp"
-
+#include <Xenon/Services/Event/Event.hpp>
 #include <glm/vec4.hpp>
 
 namespace Fls
