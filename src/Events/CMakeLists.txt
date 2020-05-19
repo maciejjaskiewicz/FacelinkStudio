@@ -9,5 +9,6 @@ set (FLS_SOURCES_EVENTS
     ${FLS_SRCROOT}/FaceRecognitionSettingChangedEvent.hpp
     ${FLS_SRCROOT}/FaceSelectedEvent.hpp
     ${FLS_SRCROOT}/OpenDatabaseEvent.hpp
+    ${FLS_SRCROOT}/RetrainFaceClassifierEvent.hpp
     PARENT_SCOPE
 )

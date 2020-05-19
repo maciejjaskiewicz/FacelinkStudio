@@ -3,6 +3,7 @@
 #include "FacelinkStudioServices.hpp"
 #include "Events/FaceSelectedEvent.hpp"
 #include "Events/OpenDatabaseEvent.hpp"
+#include "Events/RetrainFaceClassifierEvent.hpp"
 
 #include <Xenon/Core/ApplicationServices.hpp>
 #include <imgui.h>
@@ -99,7 +100,25 @@ namespace Fls
         }
 
         ImGui::SameLine();
-        ImGui::Button("Retrain Face Classifier");
+        if(ImGui::Button("Retrain Face Classifier"))
+            ImGui::OpenPopup("Retrain Face Classifier");
+
+
+        if (ImGui::BeginPopupModal("Retrain Face Classifier", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+        {
+            ImGui::Text("Are you sure you want to retrain\nFace Classifier?\n\n");
+            ImGui::Separator();
+
+            if (ImGui::Button("Yes", ImVec2(120, 0)))
+            {
+                Xenon::ApplicationServices::EventBus::ref().enqueue<RetrainFaceClassifierEvent>();
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::SetItemDefaultFocus();
+            ImGui::SameLine();
+            if (ImGui::Button("No", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
+            ImGui::EndPopup();
+        }
 
         static ImGuiTableFlags flags = ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable | ImGuiTableFlags_Hideable
             | ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders

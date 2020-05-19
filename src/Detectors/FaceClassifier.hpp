@@ -24,9 +24,11 @@ namespace Fls
     private:
         typedef dlib::matrix<double, 0, 1> Sample;
         typedef dlib::linear_kernel<Sample> LinearKernel;
+        typedef dlib::vector_normalizer<Sample> Normalizer;
         typedef dlib::multiclass_linear_decision_function<LinearKernel, int> DecisionFunction;
         typedef dlib::normalized_function<DecisionFunction> Classifier;
 
+        void train();
         std::vector<FaceClassificationResult> namePredictions(const std::vector<int>& predictions) const;
 
         std::atomic_bool mInitialized{ false };

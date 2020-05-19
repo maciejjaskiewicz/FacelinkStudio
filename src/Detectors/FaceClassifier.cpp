@@ -1,7 +1,13 @@
 #include "FaceClassifier.hpp"
 
 #include "Persistence/SqlStatement.hpp"
+#include "Persistence/DatabaseTransaction.hpp"
+#include "Events/RetrainFaceClassifierEvent.hpp"
 #include "Utils/DataUtils.hpp"
+
+#include <Xenon/Core/ApplicationServices.hpp>
+#include <dlib/image_processing.h>
+#include <dlib/svm/svm_multiclass_linear_trainer.h>
 
 namespace Fls
 {
@@ -23,6 +29,12 @@ namespace Fls
 
                 mInitialized.store(true);
             }
+        });
+
+        Xenon::ApplicationServices::EventBus::ref().subscribe<RetrainFaceClassifierEvent>(
+            [this](const RetrainFaceClassifierEvent& event)
+        {
+            train();
         });
     }
 
@@ -108,5 +120,71 @@ namespace Fls
         }
 
         return result;
+    }
+
+    void FaceClassifier::train()
+    {
+        SqlStatement st(*mDatabase, "SELECT Id, OwnerId, Embeddings FROM Face");
+        st.exec();
+
+        std::vector<int> personIds, labels;
+        std::vector<Sample> samples;
+
+        while (st.moveNext())
+        {
+            std::vector<float> embeddingsVec;
+
+            const auto id = st.getColumnAsInt(0);
+            const auto label = st.getColumnAsInt(1);
+            auto embeddingsData = st.getColumnAsStream(2);
+
+            dlib::deserialize(embeddingsVec, embeddingsData);
+            dlib::matrix<float, 0, 1> embeddings(dlib::mat(embeddingsVec));
+
+            personIds.emplace_back(id);
+            labels.emplace_back(label);
+            samples.emplace_back(dlib::matrix_cast<double>(embeddings));
+        }
+
+        try
+        {
+            Normalizer normalizer;
+            normalizer.train(samples);
+
+            for (auto& sample : samples)
+                sample = normalizer(sample);
+
+            dlib::svm_multiclass_linear_trainer<LinearKernel, int> trainer;
+            trainer.set_c(5);
+
+            Classifier classifier;
+            classifier.normalizer = normalizer;
+            classifier.function = trainer.train(samples, labels);
+
+            std::ostringstream serializedClassifier;
+            dlib::serialize(classifier, serializedClassifier);
+
+            DatabaseTransaction transaction(*mDatabase);
+
+            SqlStatement cst(*mDatabase, "INSERT INTO Classifier(Data, Dirty, CreatedDate) VALUES(?,?,DATETIME('now'))");
+            cst.bindStream(1, serializedClassifier);
+            cst.bindInt(2, 0);
+            cst.exec();
+
+            const auto classifierId = cst.lastInsertedId();
+
+            SqlStatement fst(*mDatabase, "UPDATE Face SET ClassifierId = ? WHERE "\
+                "Id IN (" + DataUtils::vectorToString(personIds, ",") + ")");
+            fst.bindInt(1, classifierId);
+            fst.exec();
+
+            transaction.commit();
+
+            mClassifier = classifier;
+        }
+        catch (const std::exception& e)
+        {
+            XN_ERROR("Failed to retrain Face Classifier {}", e.what());
+        }
     }
 }
